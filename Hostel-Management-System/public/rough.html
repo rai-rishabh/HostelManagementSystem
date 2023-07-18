@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Leave Application Form</title>
+
+	<link rel="stylesheet" href="css/navbar.css" />
+    <link rel="stylesheet" href="css/cards.css" />
+    <link rel="stylesheet" href="css/welcome-text.css" />
+    <link rel="stylesheet" href="css/cat-welcome.css" />
+    <link rel="stylesheet" href="css/form.css" />
+</head>
+<body>
+	<h2>Leave Application Form</h2>
+	<form method="POST" action="/process_leave">
+		<label for="from_date">From Date:</label>
+		<input type="date" id="from_date" name="from_date" required onchange="calculateDays()">
+
+		<label for="to_date">To Date:</label>
+		<input type="date" id="to_date" name="to_date" required onchange="calculateDays()">
+
+	
+		<fieldset> 
+
+			<legend>Address on leave :</legend>
+
+			<label for="zipcode">Zipcode:</label>
+			<input type="text" id="zipcode" name="zipcode" required>
+
+			<label for="city">City:</label>
+			<input type="text" id="city" name="city" readonly>
+
+			<label for="state">State:</label>
+			<input type="text" id="state" name="state" readonly>
+						
+			<label for="address">Address:</label>
+			<textarea id="address" name="address" style="resize: none;" required></textarea>   
+	  
+		</fieldset> 
+
+		<label for="reason">Reason:</label>
+		<textarea id="reason" name="reason" rows="4" required></textarea>
+
+		<label for="no_of_days">Number of Days:</label>
+		<input type="text" id="no_of_days" name="no_of_days" readonly>
+
+		<input type="submit" value="Submit">
+	</form>
+
+	<script>
+		// Calculate number of days
+		function calculateDays() {
+			var from_date = new Date(document.getElementById("from_date").value);
+			var to_date = new Date(document.getElementById("to_date").value);
+			var diff_in_time = to_date.getTime() - from_date.getTime();
+			var diff_in_days = Math.ceil(diff_in_time / (1000 * 3600 * 24)) + 1;
+			document.getElementById("no_of_days").value = diff_in_days;
+		}
+
+		// Set min attribute of date inputs to current date
+		document.getElementById("from_date").setAttribute("min", new Date().toISOString().slice(0,10));
+		document.getElementById("to_date").setAttribute("min", new Date().toISOString().slice(0,10));
+
+		fetch("pincode-dataset.csv")
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("Failed to fetch city data");
+          }
+          return response.text();
+        })
+        .then(csv => {
+          const rows = csv.trim().split("\n").slice(1);
+          const zipcodes = rows.map(row => row.split(",")[0].trim());
+          const cities = rows.map(row => row.split(",")[1].trim());
+		  const states = rows.map(row => row.split(",")[2].trim());
+  
+  // Update city and state fields when zipcode is entered
+  document.getElementById("zipcode").addEventListener("input", event => {
+	const enteredZipcode = event.target.value;
+	const index = zipcodes.indexOf(enteredZipcode);
+	if (index !== -1) {
+	  const correspondingCity = cities[index];
+	  const correspondingState = states[index];
+	  document.getElementById("city").value = correspondingCity;
+	  document.getElementById("state").value = correspondingState;
+	} else {
+	  document.getElementById("city").value = "";
+	  document.getElementById("state").value = "";
+	}
+  });
+
+  // Calculate number of days initially
+  calculateDays();
+})
+.catch(error => {
+  console.error(error);
+});
+</script>
+</body>
+</html>
+
